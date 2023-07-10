@@ -1,0 +1,62 @@
+package com.vuhien.application.controller.shop;
+
+import com.vuhien.application.entity.CartItem;
+import com.vuhien.application.entity.Product;
+import com.vuhien.application.repository.ProductRepository;
+import com.vuhien.application.service.ProductService;
+import com.vuhien.application.service.ShoppingCartService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import java.util.Optional;
+
+@Controller
+@RequestMapping("shopping-cart")
+public class ShoppingCartController {
+    @Autowired
+    ProductService productService;
+
+    @Autowired
+    ShoppingCartService cartService;
+
+    @Autowired
+    private ProductRepository productRepository;
+
+    @GetMapping("views")
+    public String viewsCarts(Model model){
+        model.addAttribute("CART_ITEMS", cartService.getAllItems());
+        model.addAttribute("TOTAL", cartService.getAmount());
+        return"shop/cart-item";
+    }
+
+    @GetMapping("add")
+    public String addCart(@RequestParam String id, @RequestParam int size){
+
+        Optional<Product> product = productRepository.findById(id);
+        if(product.isPresent()) {
+                CartItem item = new CartItem();
+                item.setProductId(product.get().getId());
+                item.setName(product.get().getName());
+                item.setPrice(product.get().getPrice());
+                item.setSize(size);
+                item.setQty(1);
+                cartService.add(item);
+            }
+            return "redirect:/shopping-cart/views";
+    }
+    @GetMapping("clear")
+    public String clearCart(){
+        cartService.clear();
+        return "redirect:/shopping-cart/views";
+    }
+
+    @GetMapping("del/{id}")
+    public String deleteCart(@PathVariable String id){
+        cartService.remove(id);
+        return "redirect:/shopping-cart/views";
+    }
+}
